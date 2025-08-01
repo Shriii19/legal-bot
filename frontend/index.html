@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Legal Advice Bot</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #f4f4f4; }
+    textarea { width: 100%; height: 100px; margin-bottom: 10px; }
+    button { padding: 10px 20px; }
+    #response { white-space: pre-wrap; background: #fff; padding: 15px; border-radius: 5px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🧑‍⚖️ Legal Advice Chatbot</h1>
+  <textarea id="query" placeholder="Describe your legal issue here..."></textarea><br>
+  <button onclick="askBot()">Ask</button>
+
+  <div id="response"></div>
+
+  <script>
+    async function askBot() {
+      const query = document.getElementById("query").value;
+      const res = await fetch("http://127.0.0.1:5000/ask", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query })
+      });
+      const data = await res.json();
+      document.getElementById("response").innerText = data.answer;
+    }
+  </script>
+</body>
+</html>
