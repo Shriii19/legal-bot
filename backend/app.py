@@ -4,10 +4,16 @@ import os
 import logging
 from datetime import datetime
 import json
+import time
 from dotenv import load_dotenv
+from models import Consultation, ConsultationStorage
+from security import rate_limit, get_client_ip, sanitize_input, generate_session_id
 
 # Load environment variables from .env file
 load_dotenv()
+
+# Initialize storage
+consultation_storage = ConsultationStorage()
 
 # Configure professional logging
 logging.basicConfig(
@@ -77,6 +83,7 @@ def serve_static_files(filename):
     return send_from_directory('static', filename)
 
 @app.route('/api/v1/legal-consultation', methods=['POST'])
+@rate_limit(max_requests=5, window_minutes=1)  # 5 requests per minute
 def legal_consultation():
     """
     Professional legal consultation endpoint
@@ -279,6 +286,72 @@ def get_legal_categories():
         },
         "timestamp": datetime.now().isoformat()
     })
+
+@app.route('/api/v1/statistics', methods=['GET'])
+def get_statistics():
+    """Get consultation statistics"""
+    try:
+        stats = consultation_storage.get_stats()
+        return jsonify({
+            "status": "success",
+            "data": stats,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error getting statistics: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "Unable to retrieve statistics",
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+@app.route('/api/v1/feedback', methods=['POST'])
+@rate_limit(max_requests=3, window_minutes=5)  # 3 feedback per 5 minutes
+def submit_feedback():
+    """Submit feedback for consultation"""
+    try:
+        if not request.json:
+            return jsonify({
+                "status": "error",
+                "message": "Invalid request format. JSON required.",
+                "timestamp": datetime.now().isoformat()
+            }), 400
+        
+        consultation_id = request.json.get('consultation_id', '')
+        rating = request.json.get('rating', 0)
+        feedback = sanitize_input(request.json.get('feedback', ''), 1000)
+        
+        if not consultation_id or not (1 <= rating <= 5):
+            return jsonify({
+                "status": "error",
+                "message": "Valid consultation_id and rating (1-5) required.",
+                "timestamp": datetime.now().isoformat()
+            }), 400
+        
+        # Store feedback (in a real app, you'd save this to database)
+        feedback_data = {
+            'consultation_id': consultation_id,
+            'rating': rating,
+            'feedback': feedback,
+            'timestamp': datetime.now().isoformat(),
+            'ip': get_client_ip()
+        }
+        
+        logger.info(f"Feedback received for consultation {consultation_id}: {rating}/5")
+        
+        return jsonify({
+            "status": "success",
+            "message": "Feedback submitted successfully",
+            "timestamp": datetime.now().isoformat()
+        })
+        
+    except Exception as e:
+        logger.error(f"Error submitting feedback: {e}")
+        return jsonify({
+            "status": "error",
+            "message": "Internal server error",
+            "timestamp": datetime.now().isoformat()
+        }), 500
 
 @app.errorhandler(404)
 def not_found(error):
