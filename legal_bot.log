@@ -1,0 +1,25 @@
+2025-08-01 18:30:51,258 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-08-01 18:30:51,258 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-08-01 18:30:51,367 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:30:51] "GET /api/v1/health HTTP/1.1" 200 -
+2025-08-01 18:30:51,628 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:30:51] "GET /api/v1/categories HTTP/1.1" 200 -
+2025-08-01 18:30:55,552 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:30:55] "[33mGET / HTTP/1.1[0m" 404 -
+2025-08-01 18:30:56,000 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:30:56] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-08-01 18:31:01,470 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:31:01] "GET /api/v1/health HTTP/1.1" 200 -
+2025-08-01 18:31:01,472 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:31:01] "GET /api/v1/categories HTTP/1.1" 200 -
+2025-08-01 18:31:05,088 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:31:05] "GET /api/v1/health HTTP/1.1" 200 -
+2025-08-01 18:31:05,093 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:31:05] "GET /api/v1/categories HTTP/1.1" 200 -
+2025-08-01 18:31:57,071 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:31:57] "OPTIONS /api/v1/legal-consultation HTTP/1.1" 200 -
+2025-08-01 18:33:12,500 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:33:12] "OPTIONS /api/v1/legal-consultation HTTP/1.1" 200 -
+2025-08-01 18:33:16,083 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:33:16] "GET /api/v1/health HTTP/1.1" 200 -
+2025-08-01 18:33:16,084 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:33:16] "GET /api/v1/categories HTTP/1.1" 200 -
+2025-08-01 18:33:21,680 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:33:21] "OPTIONS /api/v1/legal-consultation HTTP/1.1" 200 -
+2025-08-01 18:33:56,784 - werkzeug - INFO - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2025-08-01 18:33:56,784 - werkzeug - INFO - [33mPress CTRL+C to quit[0m
+2025-08-01 18:34:01,235 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:34:01] "[33mGET / HTTP/1.1[0m" 404 -
+2025-08-01 18:34:01,491 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:34:01] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-08-01 18:42:48,314 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:42:48] "[33mGET / HTTP/1.1[0m" 404 -
+2025-08-01 18:42:49,980 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:42:49] "[33mGET / HTTP/1.1[0m" 404 -
+2025-08-01 18:42:50,404 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:42:50] "[33mGET / HTTP/1.1[0m" 404 -
+2025-08-01 18:42:50,603 - werkzeug - INFO - 127.0.0.1 - - [01/Aug/2025 18:42:50] "[33mGET / HTTP/1.1[0m" 404 -
