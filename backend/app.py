@@ -4,16 +4,10 @@ import os
 import logging
 from datetime import datetime
 import json
-import time
 from dotenv import load_dotenv
-from models import Consultation, ConsultationStorage
-from security import rate_limit, get_client_ip, sanitize_input, generate_session_id
 
 # Load environment variables from .env file
 load_dotenv()
-
-# Initialize storage
-consultation_storage = ConsultationStorage()
 
 # Configure professional logging
 logging.basicConfig(
@@ -83,7 +77,6 @@ def serve_static_files(filename):
     return send_from_directory('static', filename)
 
 @app.route('/api/v1/legal-consultation', methods=['POST'])
-@rate_limit(max_requests=5, window_minutes=1)  # 5 requests per minute
 def legal_consultation():
     """
     Professional legal consultation endpoint
@@ -116,64 +109,101 @@ def legal_consultation():
                 "timestamp": datetime.now().isoformat()
             }), 400
             
-        logger.info(f"📋 Legal consultation request - Category: {category}, Urgency: {urgency}")
-        logger.info(f"📝 Query: {query[:100]}...")
+        # Sanitize input
+        query = query.replace('<', '&lt;').replace('>', '&gt;')[:5000]
+        
+        logger.info(f"Legal consultation request - Category: {category}, Urgency: {urgency}")
+        logger.info(f"Query: {query[:100]}...")
 
         if client:
             try:
-                # Professional AI prompt for legal analysis
-                system_prompt = """You are a Senior Legal Advisor specializing in Indian Law with 15+ years of experience. 
-                Provide professional, accurate, and well-structured legal analysis following Indian legal framework.
+                # Create category-specific system prompts
+                category_context = {
+                    "criminal": "You are specializing in Indian Criminal Law including IPC 1860, CrPC 1973, and recent amendments.",
+                    "civil": "You are specializing in Indian Civil Law including CPC 1908, Contract Act 1872, and civil procedures.",
+                    "constitutional": "You are specializing in Constitutional Law of India, fundamental rights, and constitutional procedures.",
+                    "corporate": "You are specializing in Indian Corporate Law including Companies Act 2013, SEBI regulations.",
+                    "family": "You are specializing in Indian Family Law including Hindu Marriage Act, Muslim Personal Law.",
+                    "property": "You are specializing in Property Law including Transfer of Property Act 1882, Registration Act.",
+                    "labor": "You are specializing in Labor Law including Industrial Disputes Act, Factories Act.",
+                    "tax": "You are specializing in Tax Law including Income Tax Act, GST, and revenue procedures.",
+                    "intellectual": "You are specializing in Intellectual Property Law including Patents Act, Trademarks Act.",
+                    "cyber": "You are specializing in Cyber Law including IT Act 2000 and digital regulations."
+                }
                 
-                Always include:
+                system_prompt = f"""You are a Senior Legal Advisor with 15+ years of experience in Indian Law. 
+                {category_context.get(category, 'You are specializing in Indian Law')}
+                
+                Provide professional, accurate legal analysis. Always include:
                 - Legal Status Assessment
-                - Applicable Laws & Sections
+                - Applicable Laws & Sections  
                 - Professional Recommendations
                 - Next Steps
                 - Important Disclaimers
                 
-                Maintain professional tone and cite relevant legal provisions."""
+                Be specific to the query and avoid generic responses."""
                 
                 user_prompt = f"""
                 Legal Category: {LEGAL_CATEGORIES.get(category, 'General Legal Matter')}
                 Urgency Level: {urgency.title()}
                 
-                CLIENT QUERY:
-                {query}
+                CLIENT QUERY: {query}
                 
-                Please provide a comprehensive legal analysis in the following professional format:
+                Provide comprehensive legal analysis in this format:
                 
                 **LEGAL STATUS ASSESSMENT:**
-                [Clear assessment of the legal standing]
+                [Specific assessment for this query]
                 
                 **APPLICABLE LAWS & SECTIONS:**
-                [Relevant Indian laws, acts, and specific sections]
+                [Relevant laws and sections specific to this case]
                 
                 **PROFESSIONAL ANALYSIS:**
-                [Detailed legal analysis and implications]
+                [Detailed analysis of legal implications]
                 
                 **RECOMMENDED ACTIONS:**
-                [Specific, actionable legal steps]
+                [Specific actionable steps]
                 
                 **TIMELINE & URGENCY:**
-                [Time-sensitive considerations if any]
+                [Time considerations for this specific matter]
                 
                 **IMPORTANT DISCLAIMERS:**
-                [Professional legal disclaimers]
+                [Legal disclaimers]
                 """
 
                 response = client.chat.completions.create(
-                    model="gpt-4" if urgency == "urgent" else "gpt-3.5-turbo",
+                    model="gpt-4o" if urgency == "urgent" else "gpt-3.5-turbo",
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt}
                     ],
-                    max_tokens=1000,
-                    temperature=0.3,
+                    max_tokens=1200,
+                    temperature=0.2,
                     presence_penalty=0.1
                 )
 
                 legal_analysis = response.choices[0].message.content
+                
+                logger.info("AI legal analysis generated successfully")
+                
+                return jsonify({
+                    "status": "success",
+                    "data": {
+                        "legal_analysis": legal_analysis,
+                        "consultation_id": f"LC_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                        "category": category,
+                        "urgency": urgency,
+                        "ai_model": "gpt-4o" if urgency == "urgent" else "gpt-3.5-turbo"
+                    },
+                    "metadata": {
+                        "response_time": "AI-powered",
+                        "disclaimer": "This is AI-generated legal guidance. Consult a qualified lawyer for official legal advice.",
+                        "timestamp": datetime.now().isoformat()
+                    }
+                })
+                
+            except Exception as openai_error:
+                logger.error(f"OpenAI API error: {openai_error}")
+                # Fall through to demo response
                 
                 logger.info("✅ AI legal analysis generated successfully")
                 
@@ -286,72 +316,6 @@ def get_legal_categories():
         },
         "timestamp": datetime.now().isoformat()
     })
-
-@app.route('/api/v1/statistics', methods=['GET'])
-def get_statistics():
-    """Get consultation statistics"""
-    try:
-        stats = consultation_storage.get_stats()
-        return jsonify({
-            "status": "success",
-            "data": stats,
-            "timestamp": datetime.now().isoformat()
-        })
-    except Exception as e:
-        logger.error(f"Error getting statistics: {e}")
-        return jsonify({
-            "status": "error",
-            "message": "Unable to retrieve statistics",
-            "timestamp": datetime.now().isoformat()
-        }), 500
-
-@app.route('/api/v1/feedback', methods=['POST'])
-@rate_limit(max_requests=3, window_minutes=5)  # 3 feedback per 5 minutes
-def submit_feedback():
-    """Submit feedback for consultation"""
-    try:
-        if not request.json:
-            return jsonify({
-                "status": "error",
-                "message": "Invalid request format. JSON required.",
-                "timestamp": datetime.now().isoformat()
-            }), 400
-        
-        consultation_id = request.json.get('consultation_id', '')
-        rating = request.json.get('rating', 0)
-        feedback = sanitize_input(request.json.get('feedback', ''), 1000)
-        
-        if not consultation_id or not (1 <= rating <= 5):
-            return jsonify({
-                "status": "error",
-                "message": "Valid consultation_id and rating (1-5) required.",
-                "timestamp": datetime.now().isoformat()
-            }), 400
-        
-        # Store feedback (in a real app, you'd save this to database)
-        feedback_data = {
-            'consultation_id': consultation_id,
-            'rating': rating,
-            'feedback': feedback,
-            'timestamp': datetime.now().isoformat(),
-            'ip': get_client_ip()
-        }
-        
-        logger.info(f"Feedback received for consultation {consultation_id}: {rating}/5")
-        
-        return jsonify({
-            "status": "success",
-            "message": "Feedback submitted successfully",
-            "timestamp": datetime.now().isoformat()
-        })
-        
-    except Exception as e:
-        logger.error(f"Error submitting feedback: {e}")
-        return jsonify({
-            "status": "error",
-            "message": "Internal server error",
-            "timestamp": datetime.now().isoformat()
-        }), 500
 
 @app.errorhandler(404)
 def not_found(error):
