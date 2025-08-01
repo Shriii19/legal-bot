@@ -42,7 +42,7 @@ try:
         client = OpenAI(api_key=api_key)
         logger.info("✅ OpenAI client initialized successfully")
     else:
-        logger.warning("⚠️ No OpenAI API key found. Running in demo mode.")
+        logger.warning("WARNING: No OpenAI API key found. Running in demo mode.")
         
 except ImportError:
     logger.error("❌ OpenAI package not installed. Please install: pip install openai")
@@ -297,10 +297,10 @@ def internal_error(error):
     }), 500
 
 if __name__ == '__main__':
-    logger.info("🚀 Starting Professional Legal Bot API Server...")
-    logger.info(f"🌐 Server URL: http://127.0.0.1:5000")
-    logger.info(f"🤖 AI Status: {'OpenAI Ready' if client else 'Demo Mode'}")
-    logger.info(f"📚 Legal Categories: {len(LEGAL_CATEGORIES)} available")
+    logger.info("Starting Professional Legal Bot API Server...")
+    logger.info(f"Server URL: http://127.0.0.1:5000")
+    logger.info(f"AI Status: {'OpenAI Ready' if client else 'Demo Mode'}")
+    logger.info(f"Legal Categories: {len(LEGAL_CATEGORIES)} available")
     
     app.run(
         debug=False,
